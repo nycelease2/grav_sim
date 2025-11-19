@@ -3,14 +3,7 @@
 import pygame
 import math
 
-#pygame setup
-pygame.init()
-screen = pygame.display.set_mode((800,600))
-clock = pygame.time.Clock()
-running = True
-
 G = 6.67 * math.pow(10,-11)
-T = 1000
 
 class planet:
     def __init__(self, radius, color, x,y, velocity):
@@ -20,9 +13,28 @@ class planet:
         self.vel = velocity
 
 
+#taking input for planets
+print("Hello user, this is a 2 planet system gravity simulator, please input the prefered values")
+print("for your information, screen size is 800 by 600")
+p1_r = int(input("radius of first planet: "))
+p1_x = int(input("x coordinate: "))
+p1_y = int(input("y coordinate: "))
+
+p2_r = int(input("radius of second planet: "))
+p2_x = int(input("x coordinate: "))
+p2_y = int(input("y coordinate: "))
+
+T = int(input("prefered time multiplier(I reccomend 1000): "))
+
+#pygame setup
+pygame.init()
+screen = pygame.display.set_mode((800,600))
+clock = pygame.time.Clock()
+running = True
+
 #making planets
-p1 = planet(50, "red", 300,500, pygame.math.Vector2(0.000002,0.000024))
-p2 = planet(70, "white", 550,100, pygame.math.Vector2())
+p1 = planet(p1_r, "red", p1_x, p1_y, pygame.math.Vector2())
+p2 = planet(p2_r, "white", p2_x, p2_y, pygame.math.Vector2())
 
 bodies = [p1,p2]
 
