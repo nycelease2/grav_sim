@@ -50,23 +50,6 @@ def main():
     clock = pygame.time.Clock()
     running = True
 
-    
-    #1 px = 100km
-    # earth = object(
-    #     18,
-    #     5.97 * math.pow(10, 24),
-    #     pygame.math.Vector2(0, 0),
-    #     pygame.math.Vector2(320, 240),
-    #     (50, 100, 255),
-    # )
-    #
-    # moon = object(
-    #     8,
-    #     7.34767309 * math.pow(10, 22),
-    #     pygame.math.Vector2(0, 0.000511),
-    #     earth.Position + pygame.math.Vector2(192.2, 0),
-    #     (255, 255, 255),
-    # )
 
     earth = object(
         8,
@@ -78,7 +61,7 @@ def main():
 
     MOON_DIST = 384400 / KM_PER_PX
 
-    moon = object(
+    moon1 = object(
         3,
         7.34767309e22,
         pygame.Vector2(0, 0),  # temporary
@@ -86,13 +69,22 @@ def main():
         (255, 255, 255),
     )
 
+    moon2 = object(
+        3,
+        7.34767309e22,
+        pygame.Vector2(0, 0),  # temporary
+        earth.Position - pygame.Vector2(MOON_DIST, 0),
+        (255, 100, 0),
+    )
+
     # --- orbital velocities ---
     v_moon = math.sqrt(G * earth.mass / MOON_DIST)
 
-    moon.Velocity  = pygame.Vector2(0,  v_moon)
-    earth.Velocity = pygame.Vector2(0, -v_moon * (moon.mass / earth.mass))
+    moon2.Velocity = pygame.Vector2(0, -v_moon)
+    moon1.Velocity  = pygame.Vector2(0,  v_moon)
+    earth.Velocity = pygame.Vector2(0, -v_moon * (moon1.mass / earth.mass))
 
-    objects = [moon, earth]
+    objects = [moon1, earth, moon2]
 
     while running:
         for event in pygame.event.get():
@@ -103,7 +95,6 @@ def main():
         # getting acceleration for objects
         for i in objects:
             i.Acceleration = i.gravMath(objects) / i.mass
-            print(i.Acceleration)
 
         # updating velocity
         for i in objects:
