@@ -3,14 +3,27 @@ import math
 import pygame
 
 # --- SCALE ---
-KM_PER_PX = 2000
-M_PER_PX  = 2_000_000
+KM_PER_PX = 4_500_000   # 10 million km per pixel
+M_PER_PX  = KM_PER_PX * 1000
 
 # scaled gravity
 G = 6.67e-11 / (M_PER_PX**2)
 
 # time acceleration
-TIME_SCALE = 2000
+TIME_SCALE = 200
+
+CENTER = pygame.Vector2(720, 450)
+
+#masses
+SUN     = 1.98847e30
+MERCURY = 3.301e23
+VENUS   = 4.867e24
+EARTH   = 5.972e24
+MARS    = 6.417e23
+JUPITER = 1.898e27
+SATURN  = 5.683e26
+URANUS  = 8.681e25
+NEPTUNE = 1.024e26
 
 class object:
     def __init__(self, radius, mass, Velocity, Position, color):
@@ -45,46 +58,33 @@ def main():
 
     # pygame setup
     pygame.init()
-    screen = pygame.display.set_mode((640, 480))
+    screen = pygame.display.set_mode((1440, 900))
     screen.fill((75, 25, 75))
     clock = pygame.time.Clock()
     running = True
 
 
-    earth = object(
-        8,
-        5.97e24,
-        pygame.Vector2(0, 0),  # temporary
-        pygame.Vector2(320, 240),
-        (50, 100, 255),
+
+
+    sun = object(
+        21,
+        SUN,
+        pygame.Vector2(0,0),
+        CENTER,
+        (255,220,120),
     )
 
-    MOON_DIST = 384400 / KM_PER_PX
+    mercury = make_planet(2, MERCURY, 57.9e6, (200,200,200))
+    venus   = make_planet(4, VENUS, 108.2e6, (220,180,120))
+    earth   = make_planet(5, EARTH, 149.6e6, (100,150,255))
+    mars    = make_planet(3, MARS, 227.9e6, (200,100,80))
+    jupiter = make_planet(12, JUPITER, 778.6e6, (220,200,160))
+    saturn  = make_planet(10, SATURN, 1.43e9, (210,190,140))
+    uranus  = make_planet(7, URANUS, 2.87e9, (180,220,220))
+    neptune = make_planet(7, NEPTUNE, 4.50e9, (120,150,255))
 
-    moon1 = object(
-        3,
-        7.34767309e22,
-        pygame.Vector2(0, 0),  # temporary
-        earth.Position + pygame.Vector2(MOON_DIST, 0),
-        (255, 255, 255),
-    )
+    objects = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune]
 
-    moon2 = object(
-        3,
-        7.34767309e22,
-        pygame.Vector2(0, 0),  # temporary
-        earth.Position - pygame.Vector2(MOON_DIST, 0),
-        (255, 100, 0),
-    )
-
-    # --- orbital velocities ---
-    v_moon = math.sqrt(G * earth.mass / MOON_DIST)
-
-    moon2.Velocity = pygame.Vector2(0, -v_moon)
-    moon1.Velocity  = pygame.Vector2(0,  v_moon)
-    earth.Velocity = pygame.Vector2(0, -v_moon * (moon1.mass / earth.mass))
-
-    objects = [moon1, earth, moon2]
 
     while running:
         for event in pygame.event.get():
@@ -116,6 +116,12 @@ def draw(objects, surface):
     for i in objects:
         i.draw(surface)
 
+def make_planet(radius_px, mass, orbit_km, color):
+    r = orbit_km / KM_PER_PX
+    pos = CENTER + pygame.Vector2(r, 0)
+    v = math.sqrt(G * SUN / r)
+    vel = pygame.Vector2(0, v)
+    return object(radius_px, mass, vel, pos, color)
 
 if __name__ == "__main__":
     main()
