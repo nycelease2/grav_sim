@@ -1,101 +1,130 @@
 #!/bin/python3
-
-import pygame
 import math
+import pygame
 
-G = 6.67 * math.pow(10,-11)
+# --- SCALE ---
+KM_PER_PX = 2000
+M_PER_PX  = 2_000_000
 
-class planet:
-    def __init__(self, radius, color, x,y, velocity):
+# scaled gravity
+G = 6.67e-11 / (M_PER_PX**2)
+
+# time acceleration
+TIME_SCALE = 2000
+
+class object:
+    def __init__(self, radius, mass, Velocity, Position, color):
         self.radius = radius
+        self.mass = mass
+        self.Position = Position
+        self.Velocity = Velocity
+        self.Acceleration = pygame.math.Vector2()
         self.color = color
-        self.coords = pygame.Vector2((x,y))
-        self.vel = velocity
+
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.color, self.Position, self.radius)
+
+    def gravMath(self, objects):
+        force = pygame.math.Vector2()
+        for i in objects:
+            # calc distance
+            direction = i.Position - self.Position
+            dist = direction.length()
+
+            if dist != 0:
+                force += (
+                    (G * self.mass * i.mass) / math.pow(dist, 2)
+                ) * direction.normalize()
+            else:
+                continue
+
+        return force
 
 
-#taking input for planets
-print("Hello user, this is a 2 planet system gravity simulator, please input the prefered values")
-print("for your information, screen size is 800 by 600")
-p1_r = float(input("radius of first planet: "))
-p1_x = float(input("x coordinate: "))
-p1_y = float(input("y coordinate: "))
-p1_xvel = float(input("x velocity: "))
-p1_yvel = float(input("y velocity: "))
+def main():
 
-p2_r = float(input("radius of second planet: "))
-p2_x = float(input("x coordinate: "))
-p2_y = float(input("y coordinate: "))
-p2_xvel = float(input("x velocity: "))
-p2_yvel = float(input("y velocity: "))
+    # pygame setup
+    pygame.init()
+    screen = pygame.display.set_mode((640, 480))
+    screen.fill((75, 25, 75))
+    clock = pygame.time.Clock()
+    running = True
 
-T = int(input("prefered time multiplier(I reccomend 1000): "))
-
-#pygame setup
-pygame.init()
-screen = pygame.display.set_mode((800,600))
-clock = pygame.time.Clock()
-running = True
-
-#making planets
-p1 = planet(p1_r, "red", p1_x, p1_y, pygame.math.Vector2(p1_xvel, p1_yvel))
-p2 = planet(p2_r, "white", p2_x, p2_y, pygame.math.Vector2(p2_xvel, p2_yvel))
-
-bodies = [p1,p2]
-
-def gravForce(o1,o2):
-    m = (3.14*math.pow(o1.radius,2))*(3.14*math.pow(o2.radius,2))
-    r = pygame.math.Vector2((o1.coords-o2.coords))
-    R = pygame.math.Vector2.length_squared(r)
-    if R == 0:
-        F=0
-    else:
-        F = G*(m/R)
-
-    f_vec = r.copy()
-    f_vec.scale_to_length(F)
-
-    return f_vec
-
-def force_displacement(force, obj):
-    a = force/(3.14*math.pow(obj.radius, 2))
     
-    s = obj.vel*T + 1/2* a*T*T
+    #1 px = 100km
+    # earth = object(
+    #     18,
+    #     5.97 * math.pow(10, 24),
+    #     pygame.math.Vector2(0, 0),
+    #     pygame.math.Vector2(320, 240),
+    #     (50, 100, 255),
+    # )
+    #
+    # moon = object(
+    #     8,
+    #     7.34767309 * math.pow(10, 22),
+    #     pygame.math.Vector2(0, 0.000511),
+    #     earth.Position + pygame.math.Vector2(192.2, 0),
+    #     (255, 255, 255),
+    # )
 
-    obj.vel = obj.vel + a*T
+    earth = object(
+        8,
+        5.97e24,
+        pygame.Vector2(0, 0),  # temporary
+        pygame.Vector2(320, 240),
+        (50, 100, 255),
+    )
 
-    return s
+    MOON_DIST = 384400 / KM_PER_PX
+
+    moon = object(
+        3,
+        7.34767309e22,
+        pygame.Vector2(0, 0),  # temporary
+        earth.Position + pygame.Vector2(MOON_DIST, 0),
+        (255, 255, 255),
+    )
+
+    # --- orbital velocities ---
+    v_moon = math.sqrt(G * earth.mass / MOON_DIST)
+
+    moon.Velocity  = pygame.Vector2(0,  v_moon)
+    earth.Velocity = pygame.Vector2(0, -v_moon * (moon.mass / earth.mass))
+
+    objects = [moon, earth]
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        dt = clock.tick(60)/1000 * TIME_SCALE
+
+        # getting acceleration for objects
+        for i in objects:
+            i.Acceleration = i.gravMath(objects) / i.mass
+            print(i.Acceleration)
+
+        # updating velocity
+        for i in objects:
+            i.Velocity += i.Acceleration * dt
+
+        # updating position
+        for i in objects:
+            i.Position += i.Velocity * dt
+
+        screen.fill((75, 25, 75))
+        draw(objects, screen)
+        pygame.display.flip()
 
 
-
-#gameloop
-while running:
-    #getting events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+        clock.tick(60)
 
 
-    #math and coords shifting
-    f_grav = gravForce(bodies[0], bodies[1])
-    s = force_displacement(f_grav, bodies[0])
-    s1 = force_displacement(f_grav, bodies[1])
-
-    bodies[1].coords += s1
-    bodies[0].coords -= s
+def draw(objects, surface):
+    for i in objects:
+        i.draw(surface)
 
 
-
-    #render here
-
-    screen.fill((28,28,28))#fill screen
-
-    for i in bodies:
-        pygame.draw.circle(screen,i.color, i.coords, i.radius)
-    #render ends
-
-    pygame.display.flip()#put work on screen
-
-    clock.tick(600)#framerate
-
-pygame.quit()
-
+if __name__ == "__main__":
+    main()
